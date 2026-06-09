@@ -1,0 +1,26 @@
+# Android / Gradle
+.gradle/
+/local.properties
+/build/
+**/build/
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Release signing
+keystore.properties
+*.jks
+
+# Node.js (for webapp and webapp-customer)
+node_modules/
+.npm/
+dist/
+.next/
+out/
+coverage/
+
+# Mac OS
+.DS_Store
+*.swp
