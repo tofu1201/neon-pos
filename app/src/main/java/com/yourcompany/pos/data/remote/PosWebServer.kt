@@ -105,6 +105,8 @@ class PosWebServer(
                                 totalAmount = order.totalAmount,
                                 status = order.status.name,
                                 paymentMethod = order.paymentMethod.name,
+                                tableNumber = order.tableNumber,
+                                pickupNumber = order.pickupNumber,
                                 lines = lines.map { line ->
                                     OrderLineDto(
                                         productName = line.productName,
@@ -157,7 +159,8 @@ class PosWebServer(
                                 paymentMethod = paymentMethod,
                                 status = OrderStatus.PENDING,
                                 orderType = request.orderType,
-                                tableNumber = request.tableNumber
+                                tableNumber = request.tableNumber,
+                                pickupNumber = (System.currentTimeMillis() % 1000).toString().padStart(3, '0')
                             )
                             
                             val lines = request.lines.map { line ->
@@ -321,7 +324,8 @@ class PosWebServer(
                                 status = o.status.name,
                                 createdAt = o.createdAt,
                                 orderType = o.orderType,
-                                tableNumber = o.tableNumber
+                                tableNumber = o.tableNumber,
+                                pickupNumber = o.pickupNumber
                             )
                         }.sortedByDescending { it.createdAt }
                         call.respond(response)
@@ -472,6 +476,8 @@ class PosWebServer(
         val totalAmount: Double,
         val status: String,
         val paymentMethod: String,
+        val tableNumber: String?,
+        val pickupNumber: String?,
         val lines: List<OrderLineDto>
     )
 
@@ -494,7 +500,8 @@ class PosWebServer(
         val status: String,
         val createdAt: Long,
         val orderType: String,
-        val tableNumber: String?
+        val tableNumber: String?,
+        val pickupNumber: String?
     )
 
     @Serializable

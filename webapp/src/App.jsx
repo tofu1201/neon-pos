@@ -279,10 +279,18 @@ function KDS() {
     }
   }
 
-  const markCompleted = async (id) => {
+  const markCompleted = async (order) => {
     try {
-      await axios.post(`${API_BASE}/orders/${id}/status`, { status: 'COMPLETED' })
-      knownOrderIds.current.delete(id)
+      await axios.post(`${API_BASE}/orders/${order.id}/status`, { status: 'COMPLETED' })
+      knownOrderIds.current.delete(order.id)
+      
+      // Play TTS Broadcast
+      if (soundEnabled && order.pickupNumber) {
+        const msg = new SpeechSynthesisUtterance(`取餐號碼 ${order.pickupNumber} 號，您的餐點已準備完成`);
+        msg.lang = 'zh-TW';
+        window.speechSynthesis.speak(msg);
+      }
+
       fetchOrders()
     } catch (e) {
       console.error("Failed to update status", e)
@@ -314,8 +322,11 @@ function KDS() {
           orders.map(order => (
             <div key={order.id} className="glass-panel order-card fade-scale">
               <div className="order-header">
-                <span className="order-no">#{order.orderNo}</span>
-                <span className="order-type">{order.paymentMethod === '外帶' ? '外帶' : '內用'}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="order-no">#{order.pickupNumber || order.orderNo.substring(order.orderNo.length - 4)}</span>
+                  {order.pickupNumber && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{order.orderNo}</span>}
+                </div>
+                <span className="order-type">{order.orderType || '外帶'}</span>
               </div>
               <div className="order-items">
                 {order.lines && order.lines.map((line, idx) => (
@@ -337,8 +348,8 @@ function KDS() {
                   </div>
                 ))}
               </div>
-              <button className="btn btn-primary" onClick={() => markCompleted(order.id)}>
-                出餐完成
+              <button className="btn btn-primary" onClick={() => markCompleted(order)}>
+                標記為完成 (COMPLETED)
               </button>
             </div>
           ))

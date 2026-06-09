@@ -23,7 +23,7 @@ class PosAppContainer(private val context: Context) {
         context,
         PosDatabase::class.java,
         "pos.db"
-    ).addMigrations(PosDatabase.MIGRATION_2_3, PosDatabase.MIGRATION_3_4, PosDatabase.MIGRATION_4_5, PosDatabase.MIGRATION_5_6, PosDatabase.MIGRATION_6_7)
+    ).addMigrations(PosDatabase.MIGRATION_2_3, PosDatabase.MIGRATION_3_4, PosDatabase.MIGRATION_4_5, PosDatabase.MIGRATION_5_6, PosDatabase.MIGRATION_6_7, PosDatabase.MIGRATION_7_8)
         .fallbackToDestructiveMigration()
         .build()
 

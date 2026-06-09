@@ -776,9 +776,11 @@ class PosViewModel(
                         tableNumber = currentState.tableNumber?.takeIf { it.isNotBlank() },
                         updatedAt = System.currentTimeMillis()
                     )
+                    // Ensure the existing pickupNumber is retained if not null, otherwise generate one (wait, online order might already have one, but let's just generate if missing or keep it)
                     orderRepository.updateOrder(updatedOrder, orderLines)
                 } else {
                     finalOrderNo = generateOrderNo()
+                    val newPickupNumber = (System.currentTimeMillis() % 1000).toString().padStart(3, '0')
                     val newOrder = com.yourcompany.pos.domain.model.Order(
                         orderNo = finalOrderNo,
                         totalAmount = summary.totalAmount,
@@ -788,7 +790,8 @@ class PosViewModel(
                         paymentMethod = paymentMethod,
                         status = com.yourcompany.pos.domain.model.OrderStatus.PAID,
                         orderType = currentState.orderType,
-                        tableNumber = currentState.tableNumber?.takeIf { it.isNotBlank() }
+                        tableNumber = currentState.tableNumber?.takeIf { it.isNotBlank() },
+                        pickupNumber = newPickupNumber
                     )
                     orderRepository.createOrder(newOrder, orderLines)
                 }

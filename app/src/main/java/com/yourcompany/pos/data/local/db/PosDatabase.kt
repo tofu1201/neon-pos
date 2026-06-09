@@ -28,7 +28,7 @@ import com.yourcompany.pos.data.local.entity.SettingsEntity
         SettingsEntity::class,
         HoldOrderEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class PosDatabase : RoomDatabase() {
@@ -110,6 +110,12 @@ abstract class PosDatabase : RoomDatabase() {
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `hold_orders` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `timestamp` INTEGER NOT NULL, `itemsJson` TEXT NOT NULL, `totalAmount` REAL NOT NULL, `note` TEXT)"
                 )
+            }
+        }
+
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE orders ADD COLUMN pickupNumber TEXT DEFAULT NULL")
             }
         }
     }

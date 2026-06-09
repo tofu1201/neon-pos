@@ -21,6 +21,7 @@ data class OrderEntity(
     val syncStatus: Boolean = false,
     val remoteOrderId: String? = null,
     val errorMessage: String? = null,
+    val pickupNumber: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {
@@ -38,6 +39,7 @@ data class OrderEntity(
         syncStatus = syncStatus,
         remoteOrderId = remoteOrderId,
         errorMessage = errorMessage,
+        pickupNumber = pickupNumber,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -57,6 +59,7 @@ data class OrderEntity(
             syncStatus = order.syncStatus,
             remoteOrderId = order.remoteOrderId,
             errorMessage = order.errorMessage,
+            pickupNumber = order.pickupNumber,
             createdAt = order.createdAt,
             updatedAt = order.updatedAt
         )

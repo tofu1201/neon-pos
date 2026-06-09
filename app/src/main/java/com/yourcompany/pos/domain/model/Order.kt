@@ -54,6 +54,7 @@ data class Order(
     val syncStatus: Boolean = false,
     val remoteOrderId: String? = null,
     val errorMessage: String? = null,
+    val pickupNumber: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
