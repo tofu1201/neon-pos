@@ -17,6 +17,7 @@ sealed interface PosEvent {
     data object PrintDemoReceipt : PosEvent
     data class CashReceivedChanged(val value: String) : PosEvent
     data object DismissMessage : PosEvent
+    data object DismissAlert : PosEvent
     data class NfcStatusChanged(val message: String) : PosEvent
     data class PrinterStatusChanged(val message: String) : PosEvent
     data class AddProduct(val sku: String, val name: String, val price: Double, val taxRate: Double) : PosEvent

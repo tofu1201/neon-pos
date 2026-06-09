@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yourcompany.pos.domain.model.PaymentMethod
 import com.yourcompany.pos.presentation.pos.components.NeonButton
+import com.yourcompany.pos.presentation.pos.components.PosAlertDialog
 import com.yourcompany.pos.presentation.theme.Background
 import com.yourcompany.pos.presentation.theme.NeonCyan
 import com.yourcompany.pos.presentation.theme.NeonMint
@@ -74,6 +75,14 @@ fun CheckoutScreen(
         if (!state.isCheckingOut && (state.snackbarMessage?.contains("訂單已建立") == true || state.snackbarMessage?.contains("結帳成功") == true)) {
             onCheckoutComplete()
         }
+    }
+
+    if (state.alertTitle != null && state.alertMessage != null) {
+        PosAlertDialog(
+            title = state.alertTitle,
+            message = state.alertMessage,
+            onDismissRequest = { onEvent(PosEvent.DismissAlert) }
+        )
     }
 
     Scaffold(

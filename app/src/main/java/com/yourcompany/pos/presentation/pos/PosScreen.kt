@@ -54,6 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yourcompany.pos.domain.model.PaymentMethod
 import com.yourcompany.pos.presentation.pos.components.CartPanel
 import com.yourcompany.pos.presentation.pos.components.NeonButton
+import com.yourcompany.pos.presentation.pos.components.PosAlertDialog
 import com.yourcompany.pos.presentation.pos.components.MemberInfoBanner
 import com.yourcompany.pos.presentation.pos.components.ProductCard
 import com.yourcompany.pos.presentation.pos.components.StatusBanner
@@ -179,6 +180,14 @@ fun PosScreen(
             scope.launch { snackbarHostState.showSnackbar(message) }
             onEvent(PosEvent.DismissMessage)
         }
+    }
+
+    if (state.alertTitle != null && state.alertMessage != null) {
+        PosAlertDialog(
+            title = state.alertTitle,
+            message = state.alertMessage,
+            onDismissRequest = { onEvent(PosEvent.DismissAlert) }
+        )
     }
 
     Scaffold(

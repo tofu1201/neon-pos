@@ -40,6 +40,8 @@ data class PosUiState(
     val snackbarMessage: String? = null,
     val printReceipt: Boolean = true,
     val errorMessage: String? = null,
+    val alertTitle: String? = null,
+    val alertMessage: String? = null,
     val memberId: String? = null,
     val memberName: String? = null,
     val memberPoints: Int? = null,

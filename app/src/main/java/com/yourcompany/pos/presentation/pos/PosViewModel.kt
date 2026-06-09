@@ -71,6 +71,7 @@ class PosViewModel(
             PosEvent.PrintDemoReceipt -> printDemoReceipt()
             is PosEvent.CashReceivedChanged -> updateCashReceived(event.value)
             PosEvent.DismissMessage -> dismissMessage()
+            PosEvent.DismissAlert -> _uiState.update { it.copy(alertTitle = null, alertMessage = null) }
             is PosEvent.NfcStatusChanged -> updateNfcStatus(event.message)
             is PosEvent.PrinterStatusChanged -> updatePrinterStatus(event.message)
             is PosEvent.AddProduct -> addProduct(event.sku, event.name, event.price, event.taxRate)
@@ -665,21 +666,29 @@ class PosViewModel(
                 // Let's assume member phone is not in order right now, wait, we need to check if order has memberId.
                 // The prompt says "If MEMBER_BALANCE and memberId is available".
                 // I will add a simple message for now and try to find the member if possible, or just instruct the cashier.
-                // Actually, let's refund if we have the current member logged in, otherwise just instruct.
-                val phone = _uiState.value.memberId
+                val phone = order.memberPhone
                 if (phone != null) {
                     val success = memberRepository.updateBalance(phone, order.totalAmount)
                     if (success) {
-                        _uiState.update { it.copy(snackbarMessage = "訂單已取消，已退還餘額 NT$ ${order.totalAmount} 至會員帳戶") }
+                        _uiState.update { it.copy(
+                            alertTitle = "退款成功",
+                            alertMessage = "訂單已取消，已退還餘額 NT$ ${order.totalAmount} 至會員帳戶"
+                        ) }
                     } else {
-                        _uiState.update { it.copy(errorMessage = "退還餘額失敗") }
+                        _uiState.update { it.copy(alertTitle = "退款失敗", alertMessage = "退還會員餘額失敗") }
                         return@launch
                     }
                 } else {
-                    _uiState.update { it.copy(snackbarMessage = "訂單已取消，因無法確認會員，請以其他方式退還 NT$ ${order.totalAmount}") }
+                    _uiState.update { it.copy(
+                        alertTitle = "需手動退款",
+                        alertMessage = "訂單已取消，因無法確認會員，請以其他方式退還 NT$ ${order.totalAmount}"
+                    ) }
                 }
             } else {
-                _uiState.update { it.copy(snackbarMessage = "訂單已取消，請退還現金/刷卡 NT$ ${order.totalAmount} 給顧客") }
+                _uiState.update { it.copy(
+                    alertTitle = "需退還款項",
+                    alertMessage = "訂單已取消，請退還 ${order.paymentMethod} NT$ ${order.totalAmount} 給顧客"
+                ) }
             }
             
             orderRepository.updateStatus(orderId, com.yourcompany.pos.domain.model.OrderStatus.CANCELLED)
@@ -690,7 +699,7 @@ class PosViewModel(
         val currentState = _uiState.value
         val cartItems = currentState.cartItems
         if (cartItems.isEmpty() && currentState.checkoutOnlineOrder == null) {
-            _uiState.update { it.copy(errorMessage = "購物車是空的，無法結帳") }
+            _uiState.update { it.copy(alertTitle = "錯誤", alertMessage = "購物車是空的，無法結帳") }
             return
         }
 
@@ -714,7 +723,8 @@ class PosViewModel(
                         _uiState.update {
                             it.copy(
                                 isCheckingOut = false,
-                                errorMessage = "無法使用會員餘額：尚未登入會員"
+                                alertTitle = "結帳失敗",
+                                alertMessage = "無法使用會員餘額：尚未登入會員"
                             )
                         }
                         return@runCatching
@@ -725,7 +735,8 @@ class PosViewModel(
                         _uiState.update {
                             it.copy(
                                 isCheckingOut = false,
-                                errorMessage = "餘額不足，目前餘額：NT$ ${currentState.memberBalance}"
+                                alertTitle = "餘額不足",
+                                alertMessage = "餘額不足，目前餘額：NT$ ${currentState.memberBalance}"
                             )
                         }
                         return@runCatching
@@ -818,7 +829,9 @@ class PosViewModel(
                         isCheckoutScreenActive = false,
                         checkoutOnlineOrder = null,
                         cashReceivedInput = "",
-                        snackbarMessage = "結帳成功！",
+                        snackbarMessage = if (summary.changeAmount > 0) null else "結帳成功！",
+                        alertTitle = if (summary.changeAmount > 0) "找零提示" else null,
+                        alertMessage = if (summary.changeAmount > 0) "結帳成功！需找零：NT$ ${String.format(Locale.getDefault(), "%.2f", summary.changeAmount)}" else null,
                         memberId = null,
                         memberName = null,
                         memberPoints = 0,
@@ -835,7 +848,8 @@ class PosViewModel(
                 _uiState.update {
                     it.copy(
                         isCheckingOut = false,
-                        errorMessage = error.message ?: "結帳失敗"
+                        alertTitle = "結帳失敗",
+                        alertMessage = error.message ?: "結帳失敗"
                     )
                 }
             }
