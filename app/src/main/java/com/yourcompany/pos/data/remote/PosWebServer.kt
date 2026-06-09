@@ -417,10 +417,32 @@ class PosWebServer(
                         val totalOrders = todayOrders.size
                         val averageOrderValue = if (totalOrders > 0) todayRevenue / totalOrders else 0.0
 
+                        val hourlyRevenue = mutableMapOf<Int, Double>()
+                        val popularItems = mutableMapOf<String, Int>()
+                        for (i in 0..23) hourlyRevenue[i] = 0.0
+
+                        todayOrders.forEach { o ->
+                            val cal = java.util.Calendar.getInstance().apply { timeInMillis = o.createdAt }
+                            val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+                            hourlyRevenue[hour] = (hourlyRevenue[hour] ?: 0.0) + o.totalAmount
+                            
+                            val lines = orderRepository.getOrderLines(o.id)
+                            lines.forEach { line ->
+                                popularItems[line.productName] = (popularItems[line.productName] ?: 0) + line.quantity
+                            }
+                        }
+
+                        val sortedPopularItems = popularItems.entries
+                            .sortedByDescending { it.value }
+                            .take(5)
+                            .associate { it.key to it.value }
+
                         call.respond(StatsResponseDto(
                             todayRevenue = todayRevenue,
                             totalOrders = totalOrders,
-                            averageOrderValue = averageOrderValue
+                            averageOrderValue = averageOrderValue,
+                            hourlyRevenue = hourlyRevenue,
+                            popularItems = sortedPopularItems
                         ))
                     }
 
@@ -580,7 +602,9 @@ class PosWebServer(
     data class StatsResponseDto(
         val todayRevenue: Double,
         val totalOrders: Int,
-        val averageOrderValue: Double
+        val averageOrderValue: Double,
+        val hourlyRevenue: Map<Int, Double> = emptyMap(),
+        val popularItems: Map<String, Int> = emptyMap()
     )
 
     companion object {

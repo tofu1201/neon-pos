@@ -12,6 +12,7 @@ import com.yourcompany.pos.domain.repository.OrderRepository
 import com.yourcompany.pos.domain.repository.ProductRepository
 import com.yourcompany.pos.domain.repository.MemberRepository
 import com.yourcompany.pos.domain.repository.SettingsRepository
+import com.yourcompany.pos.domain.repository.EmployeeRepository
 import com.yourcompany.pos.data.repository.HoldOrderRepository
 
 class PosViewModelFactory(
@@ -21,6 +22,7 @@ class PosViewModelFactory(
     private val memberRepository: MemberRepository,
     private val settingsRepository: SettingsRepository,
     private val holdOrderRepository: HoldOrderRepository,
+    private val employeeRepository: EmployeeRepository,
     private val nfcManager: NfcManager,
     private val printerManager: PrinterManager
 ) : ViewModelProvider.Factory {
@@ -34,6 +36,7 @@ class PosViewModelFactory(
                 memberRepository = memberRepository,
                 settingsRepository = settingsRepository,
                 holdOrderRepository = holdOrderRepository,
+                employeeRepository = employeeRepository,
                 nfcManager = nfcManager,
                 printerManager = printerManager
             ) as T

@@ -41,4 +41,9 @@ sealed interface PosEvent {
     data class SetCheckoutScreenActive(val active: Boolean) : PosEvent
     data class CancelOrder(val orderId: Long) : PosEvent
     object ClearCompletedOrderNo : PosEvent
+    data class LoginEmployee(val pin: String) : PosEvent
+    object LogoutEmployee : PosEvent
+    data class CancelOrderAttempt(val orderId: Long) : PosEvent
+    data class VerifyAdminPinForCancel(val pin: String) : PosEvent
+    object DismissAdminPinDialog : PosEvent
 }

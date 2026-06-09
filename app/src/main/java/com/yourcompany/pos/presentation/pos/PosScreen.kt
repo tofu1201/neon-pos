@@ -101,7 +101,7 @@ fun PosScreen(
         RecentOrdersDialog(
             orders = state.recentOrders,
             onDismiss = { showRecentOrders = false },
-            onCancelOrder = { onEvent(PosEvent.CancelOrder(it)) }
+            onCancelOrder = { onEvent(PosEvent.CancelOrderAttempt(it)) }
         )
     }
 
@@ -202,6 +202,21 @@ fun PosScreen(
         )
     }
 
+    if (state.showPinLoginDialog) {
+        PinLoginDialog(
+            errorMessage = state.errorMessage,
+            onLogin = { onEvent(PosEvent.LoginEmployee(it)) }
+        )
+    }
+
+    if (state.showAdminPinDialogForCancel) {
+        AdminPinDialog(
+            errorMessage = state.errorMessage,
+            onVerify = { onEvent(PosEvent.VerifyAdminPinForCancel(it)) },
+            onDismiss = { onEvent(PosEvent.DismissAdminPinDialog) }
+        )
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -233,6 +248,11 @@ fun PosScreen(
                     }
                     IconButton(onClick = { onEvent(PosEvent.NavigateToSettings) }) {
                         Icon(Icons.Outlined.Settings, contentDescription = "設定", tint = NeonCyan)
+                    }
+                    if (state.loggedInEmployee != null) {
+                        TextButton(onClick = { onEvent(PosEvent.LogoutEmployee) }) {
+                            Text("登出", color = NeonPink)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -471,6 +491,113 @@ fun ReceiptQrDialog(
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = NeonCyan)
                 ) {
                     Text("完成", color = Background)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PinLoginDialog(
+    errorMessage: String?,
+    onLogin: (String) -> Unit
+) {
+    var pin by remember { mutableStateOf("") }
+    
+    androidx.compose.ui.window.Dialog(onDismissRequest = { /* Cannot dismiss without login */ }) {
+        Card(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = SurfaceElevated)
+        ) {
+            Column(
+                modifier = Modifier.padding(32.dp).fillMaxWidth(),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("員工登入", style = MaterialTheme.typography.titleLarge, color = NeonCyan)
+                
+                TextField(
+                    value = pin,
+                    onValueChange = { pin = it },
+                    label = { Text("請輸入 PIN 碼") },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Background,
+                        unfocusedContainerColor = Background,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                if (errorMessage != null) {
+                    Text(errorMessage, color = NeonPink, style = MaterialTheme.typography.bodySmall)
+                }
+                
+                Button(
+                    onClick = { onLogin(pin) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = NeonCyan)
+                ) {
+                    Text("登入", color = Background)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AdminPinDialog(
+    errorMessage: String?,
+    onVerify: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var pin by remember { mutableStateOf("") }
+    
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = SurfaceElevated)
+        ) {
+            Column(
+                modifier = Modifier.padding(32.dp).fillMaxWidth(),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("需要店長權限", style = MaterialTheme.typography.titleLarge, color = NeonPink)
+                Text("取消訂單需要輸入店長 PIN 碼", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                
+                TextField(
+                    value = pin,
+                    onValueChange = { pin = it },
+                    label = { Text("請輸入店長 PIN 碼") },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Background,
+                        unfocusedContainerColor = Background,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                if (errorMessage != null) {
+                    Text(errorMessage, color = NeonPink, style = MaterialTheme.typography.bodySmall)
+                }
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = Background)
+                    ) {
+                        Text("取消", color = TextPrimary)
+                    }
+                    Button(
+                        onClick = { onVerify(pin) },
+                        modifier = Modifier.weight(1f),
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = NeonPink)
+                    ) {
+                        Text("授權", color = Background)
+                    }
                 }
             }
         }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import './index.css'
 
 const API_BASE = window.location.port === '5173' ? 'http://127.0.0.1:8080/api' : '/api'
@@ -96,7 +97,13 @@ function App() {
 
 function Dashboard() {
   const [orders, setOrders] = useState([])
-  const [stats, setStats] = useState({ todayRevenue: 0, totalOrders: 0, averageOrderValue: 0 })
+  const [stats, setStats] = useState({ 
+    todayRevenue: 0, 
+    totalOrders: 0, 
+    averageOrderValue: 0,
+    hourlyRevenue: {},
+    popularItems: {}
+  })
   
   useEffect(() => {
     fetchData()
@@ -133,7 +140,53 @@ function Dashboard() {
           <div className="stat-value">NT$ {stats.averageOrderValue.toFixed(0)}</div>
         </div>
       </div>
-      <div className="glass-panel" style={{ padding: '24px' }}>
+      <div className="dashboard-stats" style={{ marginTop: '24px' }}>
+        <div className="glass-panel stat-card" style={{ flex: 2, padding: '24px' }}>
+          <h3>每小時營收 (今日)</h3>
+          <div style={{ height: '300px', width: '100%', marginTop: '16px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={Object.entries(stats.hourlyRevenue || {}).map(([h, v]) => ({ hour: `${h}:00`, revenue: v }))}>
+                <XAxis dataKey="hour" stroke="#888" />
+                <YAxis stroke="#888" />
+                <Tooltip contentStyle={{ background: '#1a1a24', border: '1px solid #333' }} />
+                <Bar dataKey="revenue" fill="var(--accent-cyan)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="glass-panel stat-card" style={{ flex: 1, padding: '24px' }}>
+          <h3>熱銷商品排行</h3>
+          <div style={{ height: '300px', width: '100%', marginTop: '16px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie 
+                  data={Object.entries(stats.popularItems || {}).map(([k, v]) => ({ name: k, value: v }))}
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {Object.entries(stats.popularItems || {}).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={['#00f0ff', '#ff2a6d', '#05d59e', '#f5d300', '#9d00ff'][index % 5]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ background: '#1a1a24', border: '1px solid #333' }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{ textAlign: 'center', marginTop: '12px' }}>
+              {Object.entries(stats.popularItems || {}).map(([k, v], i) => (
+                <div key={k} style={{ fontSize: '12px', color: '#ccc', marginBottom: '4px' }}>
+                  <span style={{ display: 'inline-block', width: '10px', height: '10px', background: ['#00f0ff', '#ff2a6d', '#05d59e', '#f5d300', '#9d00ff'][i % 5], marginRight: '8px', borderRadius: '50%' }}></span>
+                  {k}: {v} 份
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-panel" style={{ padding: '24px', marginTop: '24px' }}>
         <h3>最近訂單記錄</h3>
         <table className="modern-table">
           <thead>

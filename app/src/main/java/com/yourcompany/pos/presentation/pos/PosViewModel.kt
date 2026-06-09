@@ -14,6 +14,7 @@ import com.yourcompany.pos.domain.repository.OrderRepository
 import com.yourcompany.pos.domain.repository.ProductRepository
 import com.yourcompany.pos.domain.repository.MemberRepository
 import com.yourcompany.pos.domain.repository.SettingsRepository
+import com.yourcompany.pos.domain.repository.EmployeeRepository
 import com.yourcompany.pos.domain.model.Member
 import com.yourcompany.pos.nfc.NfcEvent
 import com.yourcompany.pos.nfc.NfcManager
@@ -36,6 +37,7 @@ class PosViewModel(
     private val memberRepository: MemberRepository,
     private val settingsRepository: SettingsRepository,
     private val holdOrderRepository: HoldOrderRepository,
+    private val employeeRepository: EmployeeRepository,
     private val nfcManager: NfcManager,
     private val printerManager: PrinterManager
 ) : ViewModel() {
@@ -109,6 +111,46 @@ class PosViewModel(
             is PosEvent.SetCheckoutScreenActive -> _uiState.update { it.copy(isCheckoutScreenActive = event.active) }
             is PosEvent.CancelOrder -> cancelOrder(event.orderId)
             PosEvent.ClearCompletedOrderNo -> _uiState.update { it.copy(completedOrderNo = null, posIpAddress = null) }
+            is PosEvent.LoginEmployee -> loginEmployee(event.pin)
+            PosEvent.LogoutEmployee -> _uiState.update { it.copy(loggedInEmployee = null, showPinLoginDialog = true) }
+            is PosEvent.CancelOrderAttempt -> attemptCancelOrder(event.orderId)
+            is PosEvent.VerifyAdminPinForCancel -> verifyAdminPinForCancel(event.pin)
+            PosEvent.DismissAdminPinDialog -> _uiState.update { it.copy(showAdminPinDialogForCancel = false, cancelOrderIdPending = null) }
+        }
+    }
+
+    private fun loginEmployee(pin: String) {
+        viewModelScope.launch {
+            val employee = employeeRepository.login(pin)
+            if (employee != null && employee.isActive) {
+                _uiState.update { it.copy(loggedInEmployee = employee, showPinLoginDialog = false, errorMessage = null) }
+            } else {
+                _uiState.update { it.copy(errorMessage = "PIN 碼錯誤或員工不存在") }
+            }
+        }
+    }
+
+    private fun attemptCancelOrder(orderId: Long) {
+        val employee = _uiState.value.loggedInEmployee
+        if (employee != null && employee.role == com.yourcompany.pos.domain.model.EmployeeRole.ADMIN) {
+            cancelOrder(orderId)
+        } else {
+            _uiState.update { it.copy(showAdminPinDialogForCancel = true, cancelOrderIdPending = orderId) }
+        }
+    }
+
+    private fun verifyAdminPinForCancel(pin: String) {
+        viewModelScope.launch {
+            val employee = employeeRepository.login(pin)
+            if (employee != null && employee.isActive && employee.role == com.yourcompany.pos.domain.model.EmployeeRole.ADMIN) {
+                val orderId = _uiState.value.cancelOrderIdPending
+                if (orderId != null) {
+                    cancelOrder(orderId)
+                }
+                _uiState.update { it.copy(showAdminPinDialogForCancel = false, cancelOrderIdPending = null, errorMessage = null) }
+            } else {
+                _uiState.update { it.copy(errorMessage = "需要店長權限") }
+            }
         }
     }
 

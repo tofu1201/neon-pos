@@ -11,6 +11,7 @@ import com.yourcompany.pos.data.local.dao.OrderDao
 import com.yourcompany.pos.data.local.dao.ProductDao
 import com.yourcompany.pos.data.local.dao.SettingsDao
 import com.yourcompany.pos.data.local.entity.CartItemEntity
+import com.yourcompany.pos.data.local.entity.EmployeeEntity
 import com.yourcompany.pos.data.local.entity.HoldOrderEntity
 import com.yourcompany.pos.data.local.entity.MemberEntity
 import com.yourcompany.pos.data.local.entity.OrderEntity
@@ -26,9 +27,10 @@ import com.yourcompany.pos.data.local.entity.SettingsEntity
         OrderLineEntity::class,
         MemberEntity::class,
         SettingsEntity::class,
-        HoldOrderEntity::class
+        HoldOrderEntity::class,
+        EmployeeEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class PosDatabase : RoomDatabase() {
@@ -38,6 +40,7 @@ abstract class PosDatabase : RoomDatabase() {
     abstract fun memberDao(): MemberDao
     abstract fun settingsDao(): SettingsDao
     abstract fun holdOrderDao(): HoldOrderDao
+    abstract fun employeeDao(): com.yourcompany.pos.data.local.dao.EmployeeDao
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -123,6 +126,14 @@ abstract class PosDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE products ADD COLUMN stockQuantity INTEGER NOT NULL DEFAULT -1")
                 db.execSQL("ALTER TABLE products ADD COLUMN lowStockThreshold INTEGER NOT NULL DEFAULT 10")
+            }
+        }
+
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `employees` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `pin` TEXT NOT NULL, `role` TEXT NOT NULL, `isActive` INTEGER NOT NULL)"
+                )
             }
         }
     }

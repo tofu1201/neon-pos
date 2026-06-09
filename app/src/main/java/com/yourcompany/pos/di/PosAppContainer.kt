@@ -8,6 +8,13 @@ import com.yourcompany.pos.data.repository.HoldOrderRepository
 import com.yourcompany.pos.data.repository.OrderRepositoryImpl
 import com.yourcompany.pos.data.repository.ProductRepositoryImpl
 import com.yourcompany.pos.data.repository.SettingsRepositoryImpl
+import com.yourcompany.pos.data.repository.MemberRepositoryImpl
+import com.yourcompany.pos.data.repository.EmployeeRepositoryImpl
+import com.yourcompany.pos.domain.repository.MemberRepository
+import com.yourcompany.pos.domain.repository.OrderRepository
+import com.yourcompany.pos.domain.repository.ProductRepository
+import com.yourcompany.pos.domain.repository.SettingsRepository
+import com.yourcompany.pos.domain.repository.EmployeeRepository
 import com.yourcompany.pos.data.seed.SampleDataSeeder
 import com.yourcompany.pos.printer.PrinterManager
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +30,7 @@ class PosAppContainer(private val context: Context) {
         context,
         PosDatabase::class.java,
         "pos.db"
-    ).addMigrations(PosDatabase.MIGRATION_2_3, PosDatabase.MIGRATION_3_4, PosDatabase.MIGRATION_4_5, PosDatabase.MIGRATION_5_6, PosDatabase.MIGRATION_6_7, PosDatabase.MIGRATION_7_8, PosDatabase.MIGRATION_8_9)
+    ).addMigrations(PosDatabase.MIGRATION_2_3, PosDatabase.MIGRATION_3_4, PosDatabase.MIGRATION_4_5, PosDatabase.MIGRATION_5_6, PosDatabase.MIGRATION_6_7, PosDatabase.MIGRATION_7_8, PosDatabase.MIGRATION_8_9, PosDatabase.MIGRATION_9_10)
         .fallbackToDestructiveMigration()
         .build()
 
@@ -32,9 +39,10 @@ class PosAppContainer(private val context: Context) {
     val productRepository = ProductRepositoryImpl(database.productDao())
     val cartRepository = CartRepositoryImpl(database.cartDao())
     val orderRepository = OrderRepositoryImpl(database.orderDao())
-    val memberRepository = com.yourcompany.pos.data.repository.MemberRepositoryImpl(database.memberDao())
-    val settingsRepository = SettingsRepositoryImpl(database.settingsDao())
+    val memberRepository: MemberRepository by lazy { MemberRepositoryImpl(database.memberDao()) }
+    val settingsRepository: SettingsRepository by lazy { SettingsRepositoryImpl(database.settingsDao()) }
     val holdOrderRepository = HoldOrderRepository(database.holdOrderDao())
+    val employeeRepository: EmployeeRepository by lazy { EmployeeRepositoryImpl(database.employeeDao()) }
     private val sampleDataSeeder = SampleDataSeeder(productRepository)
 
     val webServer = PosWebServer(
@@ -53,6 +61,7 @@ class PosAppContainer(private val context: Context) {
             memberRepository = memberRepository,
             settingsRepository = settingsRepository,
             holdOrderRepository = holdOrderRepository,
+            employeeRepository = employeeRepository,
             nfcManager = nfcManager,
             printerManager = printerManager
         )
@@ -61,6 +70,7 @@ class PosAppContainer(private val context: Context) {
     init {
         applicationScope.launch {
             sampleDataSeeder.seedIfEmpty()
+            employeeRepository.seedDefaultAdminIfEmpty()
         }
     }
 }

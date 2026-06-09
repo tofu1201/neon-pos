@@ -5,6 +5,7 @@ import com.yourcompany.pos.domain.model.CartItem
 import com.yourcompany.pos.domain.model.Order
 import com.yourcompany.pos.domain.model.Product
 import com.yourcompany.pos.domain.model.PaymentMethod
+import com.yourcompany.pos.domain.model.Employee
 
 data class PosUiState(
     val products: List<Product> = emptyList(),
@@ -45,7 +46,13 @@ data class PosUiState(
     val memberId: String? = null,
     val memberName: String? = null,
     val memberPoints: Int? = null,
-    val memberDiscountRate: Double = 1.0,
+    val memberDiscountRate: Double? = null,
+    val completedOrderNo: String? = null,
+    val posIpAddress: String? = null,
+    val loggedInEmployee: Employee? = null,
+    val showPinLoginDialog: Boolean = true,
+    val showAdminPinDialogForCancel: Boolean = false,
+    val cancelOrderIdPending: Long? = null,
     val memberSource: String? = null,
     val productTagSku: String? = null,
     val productTagName: String? = null,
