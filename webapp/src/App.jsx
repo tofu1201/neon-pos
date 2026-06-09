@@ -176,6 +176,17 @@ function OrderHistory() {
     }
   }
 
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("確定要取消這筆訂單嗎？（如果為會員餘額支付，需由 POS 機退還，網頁僅標記取消）")) return;
+    try {
+      await axios.post(`${API_BASE}/orders/${orderId}/cancel`)
+      fetchOrders()
+      alert("訂單已取消")
+    } catch (e) {
+      alert("取消失敗：" + e.message)
+    }
+  }
+
   return (
     <div className="animate-fade-in fade-scale glass-panel" style={{ padding: '24px' }}>
       <h3>所有歷史訂單</h3>
@@ -187,6 +198,7 @@ function OrderHistory() {
             <th>狀態</th>
             <th>付款方式</th>
             <th>金額</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -197,6 +209,17 @@ function OrderHistory() {
               <td><span className="order-type">{order.status}</span></td>
               <td>{order.paymentMethod}</td>
               <td style={{ color: 'var(--accent-cyan)' }}>${order.totalAmount}</td>
+              <td>
+                {order.status !== 'CANCELLED' && (
+                  <button 
+                    className="action-btn" 
+                    style={{ background: 'var(--accent-pink)', padding: '4px 8px', fontSize: '12px' }}
+                    onClick={() => handleCancelOrder(order.id)}
+                  >
+                    取消
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
