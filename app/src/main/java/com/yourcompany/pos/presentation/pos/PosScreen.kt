@@ -14,10 +14,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -187,6 +191,14 @@ fun PosScreen(
             title = state.alertTitle,
             message = state.alertMessage,
             onDismissRequest = { onEvent(PosEvent.DismissAlert) }
+        )
+    }
+
+    if (state.completedOrderNo != null && state.posIpAddress != null) {
+        ReceiptQrDialog(
+            orderNo = state.completedOrderNo,
+            ipAddress = state.posIpAddress,
+            onDismissRequest = { onEvent(PosEvent.ClearCompletedOrderNo) }
         )
     }
 
@@ -405,4 +417,62 @@ private fun MemberInfoSection(state: PosUiState) {
         discountRate = state.memberDiscountRate,
         color = NeonMint
     )
+}
+
+@Composable
+fun ReceiptQrDialog(
+    orderNo: String,
+    ipAddress: String,
+    onDismissRequest: () -> Unit
+) {
+    val url = "http://$ipAddress:8080/receipt/$orderNo"
+    val bitmap = remember(url) { com.yourcompany.pos.presentation.pos.components.generateQrCodeBitmap(url) }
+
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismissRequest) {
+        Card(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = SurfaceElevated)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(32.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "電子收據 QR Code",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = NeonCyan
+                )
+                Text(
+                    text = "顧客掃描以下條碼即可獲取電子收據",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = "QR Code",
+                        modifier = Modifier
+                            .size(250.dp)
+                            .padding(8.dp)
+                            .background(androidx.compose.ui.graphics.Color.White)
+                            .padding(8.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Text("QR Code 產生失敗", color = NeonPink)
+                }
+                
+                Button(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = NeonCyan)
+                ) {
+                    Text("完成", color = Background)
+                }
+            }
+        }
+    }
 }

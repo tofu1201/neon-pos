@@ -23,6 +23,9 @@ interface ProductDao {
     @Upsert
     suspend fun upsert(product: ProductEntity)
 
+    @Query("UPDATE products SET stockQuantity = stockQuantity + :amount WHERE id = :productId AND stockQuantity != -1")
+    suspend fun updateStock(productId: Long, amount: Int)
+
     @Upsert
     suspend fun upsertAll(products: List<ProductEntity>)
 

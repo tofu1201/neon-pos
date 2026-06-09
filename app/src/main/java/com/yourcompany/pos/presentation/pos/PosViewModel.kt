@@ -108,6 +108,7 @@ class PosViewModel(
             is PosEvent.ScanOnlineOrder -> scanOnlineOrder(event.orderNo)
             is PosEvent.SetCheckoutScreenActive -> _uiState.update { it.copy(isCheckoutScreenActive = event.active) }
             is PosEvent.CancelOrder -> cancelOrder(event.orderId)
+            PosEvent.ClearCompletedOrderNo -> _uiState.update { it.copy(completedOrderNo = null, posIpAddress = null) }
         }
     }
 
@@ -326,6 +327,16 @@ class PosViewModel(
             val existingCartItem = _uiState.value.cartItems.find { 
                 it.productId == productId && it.modifiers == modifiers && it.note == note 
             }
+            
+            val currentQty = existingCartItem?.quantity ?: 0
+            if (product.stockQuantity != -1 && currentQty + 1 > product.stockQuantity) {
+                _uiState.update { it.copy(
+                    alertTitle = "庫存不足",
+                    alertMessage = "商品 ${product.name} 庫存僅剩 ${product.stockQuantity} 件"
+                ) }
+                return@launch
+            }
+
             if (existingCartItem != null) {
                 cartRepository.updateQuantity(existingCartItem.id, existingCartItem.quantity + 1)
             } else {
@@ -348,6 +359,17 @@ class PosViewModel(
 
     private fun updateQuantity(cartItemId: Long, quantity: Int) {
         viewModelScope.launch {
+            val existingItem = _uiState.value.cartItems.find { it.id == cartItemId }
+            if (existingItem != null) {
+                val product = productRepository.getProductById(existingItem.productId)
+                if (product != null && product.stockQuantity != -1 && quantity > product.stockQuantity) {
+                    _uiState.update { it.copy(
+                        alertTitle = "庫存不足",
+                        alertMessage = "商品 ${product.name} 庫存僅剩 ${product.stockQuantity} 件"
+                    ) }
+                    return@launch
+                }
+            }
             cartRepository.updateQuantity(cartItemId, quantity)
         }
     }
@@ -690,8 +712,13 @@ class PosViewModel(
                     alertMessage = "訂單已取消，請退還 ${order.paymentMethod} NT$ ${order.totalAmount} 給顧客"
                 ) }
             }
-            
             orderRepository.updateStatus(orderId, com.yourcompany.pos.domain.model.OrderStatus.CANCELLED)
+
+            // Restore stock
+            val lines = orderRepository.getOrderLines(orderId)
+            lines.forEach { line ->
+                productRepository.updateStock(line.productId, line.quantity)
+            }
         }
     }
 
@@ -796,6 +823,11 @@ class PosViewModel(
                     orderRepository.createOrder(newOrder, orderLines)
                 }
 
+                // Deduct stock for all items
+                orderLines.forEach { line ->
+                    productRepository.updateStock(line.productId, -line.quantity)
+                }
+
                 if (printReceipt) {
                     val storeSettings = settingsRepository.getAllSettings()
                     printerManager.printOrderReceipt(
@@ -832,6 +864,8 @@ class PosViewModel(
                         isCheckoutScreenActive = false,
                         checkoutOnlineOrder = null,
                         cashReceivedInput = "",
+                        completedOrderNo = if (!printReceipt) finalOrderNo else null,
+                        posIpAddress = if (!printReceipt) com.yourcompany.pos.data.remote.PosWebServer.getLocalIpAddress() else null,
                         snackbarMessage = if (summary.changeAmount > 0) null else "結帳成功！",
                         alertTitle = if (summary.changeAmount > 0) "找零提示" else null,
                         alertMessage = if (summary.changeAmount > 0) "結帳成功！需找零：NT$ ${String.format(Locale.getDefault(), "%.2f", summary.changeAmount)}" else null,

@@ -363,7 +363,7 @@ function MenuManager() {
   const [products, setProducts] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [newProduct, setNewProduct] = useState({ sku: '', name: '', price: '', category: '' })
+  const [newProduct, setNewProduct] = useState({ sku: '', name: '', price: '', category: '', stockQuantity: -1, lowStockThreshold: 10 })
 
   useEffect(() => { fetchProducts() }, [])
 
@@ -382,7 +382,9 @@ function MenuManager() {
         sku: newProduct.sku,
         name: newProduct.name,
         price: parseFloat(newProduct.price) || 0,
-        category: newProduct.category
+        category: newProduct.category,
+        stockQuantity: parseInt(newProduct.stockQuantity) || -1,
+        lowStockThreshold: parseInt(newProduct.lowStockThreshold) || 10
       })
       setShowModal(false)
       fetchProducts()
@@ -395,14 +397,17 @@ function MenuManager() {
     <div className="animate-fade-in glass-panel fade-scale" style={{ padding: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
         <h3>菜單管理</h3>
-        <button className="btn btn-primary" onClick={() => { setEditingId(null); setNewProduct({sku:'',name:'',price:'',category:''}); setShowModal(true) }}>+ 新增商品</button>
+        <button className="btn btn-primary" onClick={() => { setEditingId(null); setNewProduct({sku:'',name:'',price:'',category:'', stockQuantity: -1, lowStockThreshold: 10}); setShowModal(true) }}>+ 新增商品</button>
       </div>
       <table className="modern-table">
-        <thead><tr><th>SKU</th><th>分類</th><th>品名</th><th>價格</th><th>操作</th></tr></thead>
+        <thead><tr><th>SKU</th><th>分類</th><th>品名</th><th>價格</th><th>庫存量</th><th>操作</th></tr></thead>
         <tbody>
           {products.map(p => (
             <tr key={p.id}>
               <td>{p.sku}</td><td>{p.category}</td><td>{p.name}</td><td style={{ color: 'var(--accent-mint)' }}>${p.price}</td>
+              <td style={{ color: p.stockQuantity !== -1 && p.stockQuantity <= p.lowStockThreshold ? 'var(--accent-red)' : 'inherit' }}>
+                {p.stockQuantity === -1 ? '無限' : p.stockQuantity}
+              </td>
               <td>
                 <button className="btn" style={{ padding: '4px 12px', background: 'rgba(0, 240, 255, 0.1)', color: 'var(--accent-cyan)', marginRight: '8px' }} onClick={() => { setEditingId(p.id); setNewProduct(p); setShowModal(true) }}>編輯</button>
                 <button className="btn" style={{ padding: '4px 12px', background: 'rgba(255, 42, 109, 0.1)', color: 'var(--accent-red)' }} onClick={async () => { if(window.confirm('確定刪除？')) { await axios.delete(`${API_BASE}/products/${p.id}`); fetchProducts() } }}>刪除</button>
@@ -421,6 +426,18 @@ function MenuManager() {
               <input className="modern-input" required value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} placeholder="分類" />
               <input className="modern-input" required value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} placeholder="品名" />
               <input className="modern-input" type="number" required value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} placeholder="價格" />
+              
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>庫存數量 (-1為無限)</label>
+                  <input className="modern-input" type="number" required value={newProduct.stockQuantity} onChange={e => setNewProduct({...newProduct, stockQuantity: e.target.value})} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>安全庫存水位</label>
+                  <input className="modern-input" type="number" required value={newProduct.lowStockThreshold} onChange={e => setNewProduct({...newProduct, lowStockThreshold: e.target.value})} />
+                </div>
+              </div>
+
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn" onClick={() => setShowModal(false)}>取消</button>
                 <button type="submit" className="btn btn-primary">儲存</button>

@@ -11,4 +11,5 @@ interface ProductRepository {
     suspend fun upsertProducts(products: List<Product>)
     suspend fun deleteProductById(productId: Long)
     suspend fun clearAll()
+    suspend fun updateStock(productId: Long, amount: Int)
 }

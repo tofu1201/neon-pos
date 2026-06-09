@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.yourcompany.pos.domain.model.Product
 import com.yourcompany.pos.presentation.theme.NeonCyan
+import com.yourcompany.pos.presentation.theme.NeonPink
 import com.yourcompany.pos.presentation.theme.SurfaceElevated
 import com.yourcompany.pos.presentation.theme.SurfaceBorder
 import com.yourcompany.pos.presentation.theme.TextPrimary
@@ -42,6 +43,10 @@ fun ProductCard(
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(targetValue = if (isPressed) 0.96f else 1f, label = "scale")
     
+    val isLowStock = product.stockQuantity in 0..product.lowStockThreshold
+    val isOutOfStock = product.stockQuantity == 0
+    val cardBorderColor = if (isLowStock || isOutOfStock) NeonPink else NeonCyan
+
     val shape = RoundedCornerShape(22.dp)
     Card(
         modifier = modifier
@@ -49,10 +54,10 @@ fun ProductCard(
             .shadow(
                 elevation = if (isPressed) 4.dp else 16.dp, 
                 shape = shape, 
-                ambientColor = NeonCyan.copy(alpha = 0.15f), 
-                spotColor = NeonCyan.copy(alpha = 0.25f)
+                ambientColor = cardBorderColor.copy(alpha = 0.15f), 
+                spotColor = cardBorderColor.copy(alpha = 0.25f)
             )
-            .border(1.dp, Brush.linearGradient(listOf(SurfaceBorder, NeonCyan.copy(alpha = 0.35f))), shape)
+            .border(if (isLowStock) 2.dp else 1.dp, Brush.linearGradient(listOf(SurfaceBorder, cardBorderColor.copy(alpha = if (isLowStock) 0.6f else 0.35f))), shape)
             .clickable(
                 interactionSource = interactionSource,
                 indication = androidx.compose.material.ripple.rememberRipple(color = NeonCyan),
@@ -72,14 +77,24 @@ fun ProductCard(
             Text(text = product.sku, color = TextSecondary, style = androidx.compose.material3.MaterialTheme.typography.bodyMedium)
             Text(
                 text = String.format(Locale.getDefault(), "NT$ %.2f", product.price),
-                color = NeonCyan,
+                color = if (isLowStock) NeonPink else NeonCyan,
                 style = androidx.compose.material3.MaterialTheme.typography.headlineSmall
             )
-            Text(
-                text = "稅率 ${(product.taxRate * 100).toInt()}%",
-                color = TextSecondary,
-                style = androidx.compose.material3.MaterialTheme.typography.bodySmall
-            )
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "稅率 ${(product.taxRate * 100).toInt()}%",
+                    color = TextSecondary,
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall
+                )
+                if (product.stockQuantity != -1) {
+                    Text(
+                        text = if (isOutOfStock) "已售完" else "庫存: ${product.stockQuantity}",
+                        color = if (isLowStock) NeonPink else TextSecondary,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                        fontWeight = if (isLowStock) androidx.compose.ui.text.font.FontWeight.Bold else null
+                    )
+                }
+            }
         }
     }
 }

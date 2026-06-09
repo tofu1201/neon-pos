@@ -40,4 +40,5 @@ sealed interface PosEvent {
     object NavigateToSettings : PosEvent
     data class SetCheckoutScreenActive(val active: Boolean) : PosEvent
     data class CancelOrder(val orderId: Long) : PosEvent
+    object ClearCompletedOrderNo : PosEvent
 }

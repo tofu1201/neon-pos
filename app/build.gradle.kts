@@ -88,7 +88,12 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
+    implementation("androidx.compose.material:material-icons-extended:1.6.8")
+
+    // ZXing for QR Code generation
+    implementation("com.google.zxing:core:3.5.3")
+
     implementation("androidx.navigation:navigation-compose:2.8.3")
 
     implementation("androidx.compose.ui:ui")

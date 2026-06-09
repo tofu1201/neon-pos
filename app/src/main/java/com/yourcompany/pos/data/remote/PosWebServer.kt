@@ -120,6 +120,64 @@ class PosWebServer(
                         call.respond(response)
                     }
 
+                    get("/receipt/{orderNo}") {
+                        val orderNo = call.parameters["orderNo"]
+                        if (orderNo == null) {
+                            call.respond(HttpStatusCode.BadRequest, "Missing Order No")
+                            return@get
+                        }
+                        val order = orderRepository.getOrderByOrderNo(orderNo)
+                        if (order == null) {
+                            call.respond(HttpStatusCode.NotFound, "Order not found")
+                            return@get
+                        }
+                        val lines = orderRepository.getOrderLines(order.id)
+                        
+                        val storeName = settingsRepository.getAllSettings()["storeName"] ?: "Neon POS"
+                        
+                        val html = buildString {
+                            appendLine("<!DOCTYPE html>")
+                            appendLine("<html><head>")
+                            appendLine("<meta charset=\"utf-8\">")
+                            appendLine("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
+                            appendLine("<title>電子收據 - $storeName</title>")
+                            appendLine("<style>")
+                            appendLine("body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0f0f13; color: #e0e0e0; padding: 20px; max-width: 400px; margin: 0 auto; }")
+                            appendLine(".receipt { background: #1a1a24; padding: 24px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.2); }")
+                            appendLine("h1 { text-align: center; color: #00f0ff; margin-top: 0; font-size: 24px; }")
+                            appendLine(".divider { border-bottom: 1px dashed #333; margin: 16px 0; }")
+                            appendLine(".item { display: flex; justify-content: space-between; margin-bottom: 8px; }")
+                            appendLine(".total { font-size: 20px; font-weight: bold; color: #00f0ff; text-align: right; }")
+                            appendLine(".footer { text-align: center; color: #888; font-size: 12px; margin-top: 24px; }")
+                            appendLine("</style></head><body>")
+                            appendLine("<div class=\"receipt\">")
+                            appendLine("<h1>$storeName</h1>")
+                            appendLine("<div style=\"text-align: center; font-size: 14px; color: #aaa;\">取餐號碼：<span style=\"font-size: 24px; color: #fff; font-weight: bold;\">${order.pickupNumber ?: \"---\"}</span></div>")
+                            appendLine("<div class=\"divider\"></div>")
+                            appendLine("<div style=\"font-size: 14px; margin-bottom: 12px;\">訂單編號: ${order.orderNo}</div>")
+                            appendLine("<div style=\"font-size: 14px; margin-bottom: 12px;\">時間: ${java.text.SimpleDateFormat(\"yyyy-MM-dd HH:mm:ss\").format(java.util.Date(order.createdAt))}</div>")
+                            appendLine("<div class=\"divider\"></div>")
+                            for (line in lines) {
+                                appendLine("<div class=\"item\">")
+                                appendLine("<span>${line.productName} x${line.quantity}</span>")
+                                appendLine("<span>$${line.unitPrice * line.quantity}</span>")
+                                appendLine("</div>")
+                                if (line.modifiers.isNotEmpty()) {
+                                    appendLine("<div style=\"font-size: 12px; color: #888; margin-bottom: 8px;\">- ${line.modifiers.joinToString(\", \")}</div>")
+                                }
+                            }
+                            appendLine("<div class=\"divider\"></div>")
+                            appendLine("<div class=\"item total\">")
+                            appendLine("<span>總計</span>")
+                            appendLine("<span>NT$ ${order.totalAmount}</span>")
+                            appendLine("</div>")
+                            appendLine("<div class=\"footer\">謝謝光臨！請妥善保存此電子收據。</div>")
+                            appendLine("</div></body></html>")
+                        }
+                        
+                        call.respondText(html, io.ktor.http.ContentType.Text.Html)
+                    }
+
                     post("/api/orders/{id}/status") {
                         val id = call.parameters["id"]?.toLongOrNull()
                         if (id == null) {
@@ -180,6 +238,11 @@ class PosWebServer(
                             
                             val orderId = orderRepository.createOrder(order, lines)
                             
+                            // Deduct stock for online orders
+                            lines.forEach { line ->
+                                productRepository.updateStock(line.productId, -line.quantity)
+                            }
+                            
                             @Serializable
                             data class CreateOrderResponse(val success: Boolean, val orderId: Long, val orderNo: String)
                             
@@ -199,7 +262,6 @@ class PosWebServer(
                             call.respond(HttpStatusCode.BadRequest, "Invalid ID")
                             return@post
                         }
-                        
                         val order = orderRepository.getOrderById(id)
                         if (order == null) {
                             call.respond(HttpStatusCode.NotFound, "Order not found")
@@ -210,9 +272,13 @@ class PosWebServer(
                             call.respond(HttpStatusCode.OK, mapOf("success" to true, "message" to "Order already cancelled"))
                             return@post
                         }
+                        
+                        // Restore stock
+                        val lines = orderRepository.getOrderLines(id)
+                        lines.forEach { line ->
+                            productRepository.updateStock(line.productId, line.quantity)
+                        }
 
-                        // Web server might not know the exact member phone. But memberId might be stored if they paid with MEMBER_BALANCE.
-                        // Wait, memberId is not in Order model yet. If they paid with MEMBER_BALANCE, how does web know who to refund?
                         // For MVP, we will only cancel it. The actual POS logic had memberId in state. 
                         // But wait! If they cancel from web, the POS won't have it in state.
                         // Let's just update the status.
@@ -229,7 +295,8 @@ class PosWebServer(
                                 name = p.name,
                                 price = p.price,
                                 category = p.category,
-                                stockQuantity = 999
+                                stockQuantity = p.stockQuantity,
+                                lowStockThreshold = p.lowStockThreshold
                             )
                         }
                         call.respond(response)
@@ -246,6 +313,8 @@ class PosWebServer(
                             price = request.price,
                             taxRate = globalTaxRate,
                             category = request.category,
+                            stockQuantity = request.stockQuantity,
+                            lowStockThreshold = request.lowStockThreshold,
                             isActive = true
                         )
                         productRepository.upsertProduct(product)
@@ -428,7 +497,9 @@ class PosWebServer(
         val sku: String,
         val name: String,
         val price: Double,
-        val category: String
+        val category: String,
+        val stockQuantity: Int = -1,
+        val lowStockThreshold: Int = 10
     )
 
     @Serializable
@@ -438,7 +509,8 @@ class PosWebServer(
         val name: String,
         val price: Double,
         val category: String,
-        val stockQuantity: Int
+        val stockQuantity: Int,
+        val lowStockThreshold: Int
     )
 
     @Serializable

@@ -14,6 +14,8 @@ data class ProductEntity(
     val taxRate: Double,
     val imageUrl: String? = null,
     val category: String = "未分類",
+    val stockQuantity: Int = -1, // -1 means unlimited
+    val lowStockThreshold: Int = 10,
     val isActive: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
@@ -26,6 +28,8 @@ data class ProductEntity(
         taxRate = taxRate,
         imageUrl = imageUrl,
         category = category,
+        stockQuantity = stockQuantity,
+        lowStockThreshold = lowStockThreshold,
         isActive = isActive,
         createdAt = createdAt,
         updatedAt = updatedAt
@@ -39,6 +43,8 @@ data class ProductEntity(
         taxRate = taxRate,
         imageUrl = imageUrl,
         category = category,
+        stockQuantity = stockQuantity,
+        lowStockThreshold = lowStockThreshold,
         isActive = isActive
     )
 
@@ -51,6 +57,8 @@ data class ProductEntity(
             taxRate = product.taxRate,
             imageUrl = product.imageUrl,
             category = product.category,
+            stockQuantity = product.stockQuantity,
+            lowStockThreshold = product.lowStockThreshold,
             isActive = product.isActive,
             createdAt = product.createdAt,
             updatedAt = product.updatedAt

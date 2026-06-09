@@ -38,4 +38,8 @@ class ProductRepositoryImpl(
     override suspend fun clearAll() {
         productDao.clearAll()
     }
+
+    override suspend fun updateStock(productId: Long, amount: Int) {
+        productDao.updateStock(productId, amount)
+    }
 }

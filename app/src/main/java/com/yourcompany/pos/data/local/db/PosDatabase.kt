@@ -28,7 +28,7 @@ import com.yourcompany.pos.data.local.entity.SettingsEntity
         SettingsEntity::class,
         HoldOrderEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class PosDatabase : RoomDatabase() {
@@ -116,6 +116,13 @@ abstract class PosDatabase : RoomDatabase() {
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE orders ADD COLUMN pickupNumber TEXT DEFAULT NULL")
+            }
+        }
+
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE products ADD COLUMN stockQuantity INTEGER NOT NULL DEFAULT -1")
+                db.execSQL("ALTER TABLE products ADD COLUMN lowStockThreshold INTEGER NOT NULL DEFAULT 10")
             }
         }
     }
