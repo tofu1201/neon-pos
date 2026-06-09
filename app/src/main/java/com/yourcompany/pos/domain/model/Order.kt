@@ -49,6 +49,7 @@ data class Order(
     val globalDiscount: Double = 0.0,
     val orderType: String = "外帶", // 內用 or 外帶
     val tableNumber: String? = null,
+    val memberPhone: String? = null,
     val paymentMethod: PaymentMethod,
     val status: OrderStatus,
     val syncStatus: Boolean = false,

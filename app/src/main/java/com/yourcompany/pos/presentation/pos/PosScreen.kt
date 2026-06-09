@@ -8,11 +8,9 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,6 +22,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +41,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material.icons.outlined.Settings
@@ -82,7 +83,6 @@ import com.yourcompany.pos.presentation.pos.components.ModifierDialog
 import com.yourcompany.pos.presentation.pos.components.CategorySidebar
 import com.yourcompany.pos.presentation.pos.components.RecentOrdersDialog
 import androidx.compose.material.icons.outlined.List
-import androidx.compose.material.icons.outlined.Settings
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -271,7 +271,7 @@ fun PosScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            val compact = maxWidth < 900.dp
+            val compact = this.maxWidth < 900.dp
             if (compact) {
                 CompactLayout(
                     state = state,
@@ -431,10 +431,10 @@ private fun SearchBar(
 private fun MemberInfoSection(state: PosUiState) {
     if (state.memberId.isNullOrBlank() || state.memberName.isNullOrBlank()) return
     MemberInfoBanner(
-        memberId = state.memberId ?: return,
-        memberName = state.memberName ?: return,
+        memberId = state.memberId,
+        memberName = state.memberName,
         points = state.memberPoints ?: 0,
-        discountRate = state.memberDiscountRate,
+        discountRate = state.memberDiscountRate ?: 1.0,
         color = NeonMint
     )
 }

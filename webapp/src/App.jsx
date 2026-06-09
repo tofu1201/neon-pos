@@ -78,6 +78,7 @@ function App() {
           <button className={`nav-link ${activeTab === 'kds' ? 'active' : ''}`} onClick={() => setActiveTab('kds')}>廚房看板</button>
           <button className={`nav-link ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>菜單管理</button>
           <button className={`nav-link ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>會員管理</button>
+          <button className={`nav-link ${activeTab === 'employees' ? 'active' : ''}`} onClick={() => setActiveTab('employees')}>員工管理</button>
           <button className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>商店設定</button>
           <button className="nav-link" onClick={handleLogout} style={{ color: 'var(--accent-pink)' }}>登出</button>
         </div>
@@ -89,6 +90,7 @@ function App() {
         {activeTab === 'kds' && <KDS />}
         {activeTab === 'menu' && <MenuManager />}
         {activeTab === 'members' && <MemberManager />}
+        {activeTab === 'employees' && <EmployeeManager />}
         {activeTab === 'settings' && <SettingsManager />}
       </main>
     </>
@@ -195,6 +197,7 @@ function Dashboard() {
               <th>狀態</th>
               <th>付款方式</th>
               <th>金額</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -204,6 +207,25 @@ function Dashboard() {
                 <td><span className="order-type">{order.status}</span></td>
                 <td>{order.paymentMethod}</td>
                 <td style={{ color: 'var(--accent-cyan)' }}>${order.totalAmount}</td>
+                <td>
+                  {order.status !== 'CANCELLED' && (
+                    <button 
+                      className="action-btn" 
+                      style={{ background: 'var(--accent-pink)', padding: '4px 8px', fontSize: '12px' }}
+                      onClick={async () => {
+                        if (!window.confirm("確定要取消這筆訂單嗎？")) return;
+                        try {
+                          await axios.post(`${API_BASE}/orders/${order.id}/cancel`)
+                          setOrders(prev => prev.map(o => o.id === order.id ? {...o, status: 'CANCELLED'} : o))
+                        } catch(e) {
+                          alert("取消失敗：" + e.message)
+                        }
+                      }}
+                    >
+                      取消
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -333,17 +355,16 @@ function KDS() {
   }
 
   const markCompleted = async (order) => {
+    // Play TTS Broadcast synchronously on click
+    if (soundEnabled && order.pickupNumber) {
+      const msg = new SpeechSynthesisUtterance(`取餐號碼 ${order.pickupNumber} 號，您的餐點已準備完成`);
+      msg.lang = 'zh-TW';
+      window.speechSynthesis.speak(msg);
+    }
+
     try {
       await axios.post(`${API_BASE}/orders/${order.id}/status`, { status: 'COMPLETED' })
       knownOrderIds.current.delete(order.id)
-      
-      // Play TTS Broadcast
-      if (soundEnabled && order.pickupNumber) {
-        const msg = new SpeechSynthesisUtterance(`取餐號碼 ${order.pickupNumber} 號，您的餐點已準備完成`);
-        msg.lang = 'zh-TW';
-        window.speechSynthesis.speak(msg);
-      }
-
       fetchOrders()
     } catch (e) {
       console.error("Failed to update status", e)
@@ -620,3 +641,103 @@ function SettingsManager() {
 }
 
 export default App
+
+function EmployeeManager() {
+  const [employees, setEmployees] = useState([])
+  const [form, setForm] = useState({ name: '', pin: '', role: 'CASHIER' })
+
+  useEffect(() => {
+    fetchEmployees()
+  }, [])
+
+  const fetchEmployees = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/employees`)
+      setEmployees(res.data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      await axios.post(`${API_BASE}/employees`, form)
+      setForm({ name: '', pin: '', role: 'CASHIER' })
+      fetchEmployees()
+    } catch (e) {
+      alert("儲存失敗：" + e.message)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("確定要刪除這位員工嗎？")) return;
+    try {
+      await axios.delete(`${API_BASE}/employees/${id}`)
+      fetchEmployees()
+    } catch (e) {
+      alert("刪除失敗：" + e.message)
+    }
+  }
+
+  return (
+    <div className="animate-fade-in fade-scale">
+      <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px' }}>
+        <h3>新增/編輯員工</h3>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <input 
+            type="text" 
+            placeholder="員工名稱" 
+            className="modern-input" 
+            value={form.name} 
+            onChange={e => setForm({...form, name: e.target.value})} 
+            required 
+          />
+          <input 
+            type="number" 
+            placeholder="登入 PIN 碼" 
+            className="modern-input" 
+            value={form.pin} 
+            onChange={e => setForm({...form, pin: e.target.value})} 
+            required 
+          />
+          <select 
+            className="modern-input" 
+            value={form.role} 
+            onChange={e => setForm({...form, role: e.target.value})}
+          >
+            <option value="CASHIER">一般店員 (CASHIER)</option>
+            <option value="ADMIN">店長 (ADMIN)</option>
+          </select>
+          <button type="submit" className="action-btn">儲存</button>
+        </form>
+      </div>
+
+      <div className="glass-panel" style={{ padding: '24px' }}>
+        <h3>員工列表</h3>
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>名稱</th>
+              <th>角色</th>
+              <th>狀態</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {employees.map(emp => (
+              <tr key={emp.id}>
+                <td>{emp.name}</td>
+                <td><span className="order-type">{emp.role}</span></td>
+                <td>{emp.isActive ? "在職" : "離職"}</td>
+                <td>
+                  <button className="action-btn" style={{ background: 'var(--accent-pink)', padding: '4px 8px', fontSize: '12px' }} onClick={() => handleDelete(emp.id)}>刪除</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

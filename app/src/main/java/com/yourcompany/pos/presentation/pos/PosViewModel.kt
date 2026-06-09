@@ -843,6 +843,7 @@ class PosViewModel(
                         status = com.yourcompany.pos.domain.model.OrderStatus.PAID,
                         orderType = currentState.orderType,
                         tableNumber = currentState.tableNumber?.takeIf { it.isNotBlank() },
+                        memberPhone = currentState.memberId,
                         updatedAt = System.currentTimeMillis()
                     )
                     // Ensure the existing pickupNumber is retained if not null, otherwise generate one (wait, online order might already have one, but let's just generate if missing or keep it)
@@ -860,6 +861,7 @@ class PosViewModel(
                         status = com.yourcompany.pos.domain.model.OrderStatus.PAID,
                         orderType = currentState.orderType,
                         tableNumber = currentState.tableNumber?.takeIf { it.isNotBlank() },
+                        memberPhone = currentState.memberId,
                         pickupNumber = newPickupNumber
                     )
                     orderRepository.createOrder(newOrder, orderLines)
@@ -1045,6 +1047,7 @@ class PosViewModel(
                         memberName = member.name,
                         memberBalance = member.balance,
                         memberPoints = member.points,
+                        memberDiscountRate = member.discountRate,
                         memberSource = "MANUAL",
                         showMemberManagerDialog = false,
                         snackbarMessage = "會員登入成功：${member.name}"
@@ -1071,6 +1074,7 @@ class PosViewModel(
                     memberName = newMember.name,
                     memberBalance = newMember.balance,
                     memberPoints = newMember.points,
+                    memberDiscountRate = newMember.discountRate,
                     memberSource = "MANUAL",
                     showMemberManagerDialog = false,
                     snackbarMessage = "會員註冊成功並自動登入：$name"

@@ -50,7 +50,8 @@ class PosAppContainer(private val context: Context) {
         orderRepository = orderRepository,
         productRepository = productRepository,
         memberRepository = memberRepository,
-        settingsRepository = settingsRepository
+        settingsRepository = settingsRepository,
+        employeeRepository = employeeRepository
     )
 
     fun getViewModelFactory(nfcManager: com.yourcompany.pos.nfc.NfcManager): PosViewModelFactory {
