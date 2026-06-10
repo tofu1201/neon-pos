@@ -357,6 +357,7 @@ function KDS() {
   const markCompleted = async (order) => {
     // Play TTS Broadcast synchronously on click
     if (soundEnabled && order.pickupNumber) {
+      window.speechSynthesis.cancel(); // Clear any stuck speech
       const msg = new SpeechSynthesisUtterance(`取餐號碼 ${order.pickupNumber} 號，您的餐點已準備完成`);
       msg.lang = 'zh-TW';
       window.speechSynthesis.speak(msg);
@@ -379,8 +380,15 @@ function KDS() {
           className={`btn ${soundEnabled ? 'btn-primary' : ''}`} 
           style={{ background: soundEnabled ? 'var(--accent-cyan)' : 'transparent', border: '1px solid var(--accent-cyan)', color: soundEnabled ? '#fff' : 'var(--accent-cyan)' }}
           onClick={() => {
-            setSoundEnabled(!soundEnabled)
-            if (!soundEnabled) playDing() // Play test sound when enabled
+            const newState = !soundEnabled;
+            setSoundEnabled(newState)
+            if (newState) {
+              playDing() // Play test sound when enabled
+              window.speechSynthesis.cancel();
+              const testMsg = new SpeechSynthesisUtterance("語音廣播已開啟");
+              testMsg.lang = 'zh-TW';
+              window.speechSynthesis.speak(testMsg);
+            }
           }}
         >
           {soundEnabled ? '🔊 提示音已開啟' : '🔈 點擊開啟提示音'}
