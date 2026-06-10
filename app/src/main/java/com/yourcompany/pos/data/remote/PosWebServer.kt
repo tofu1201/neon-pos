@@ -100,10 +100,7 @@ class PosWebServer(
                         }
                     }
 
-                    // Serve Web App Dashboard
-                    staticResources("/", "webapp") {
-                        default("index.html")
-                    }
+                    // Serve Web App Dashboard via assets is done at the bottom
 
                     // API endpoints
                     get("/api/orders") {
