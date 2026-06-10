@@ -47,7 +47,7 @@ fun ProductCard(
     val isOutOfStock = product.stockQuantity == 0
     val cardBorderColor = if (isLowStock || isOutOfStock) NeonPink else NeonCyan
 
-    val shape = RoundedCornerShape(22.dp)
+    val shape = RoundedCornerShape(16.dp)
     Card(
         modifier = modifier
             .scale(scale)
@@ -67,8 +67,8 @@ fun ProductCard(
         shape = shape
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(text = product.name, color = TextPrimary, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
@@ -78,7 +78,7 @@ fun ProductCard(
             Text(
                 text = String.format(Locale.getDefault(), "NT$ %.2f", product.price),
                 color = if (isLowStock) NeonPink else NeonCyan,
-                style = androidx.compose.material3.MaterialTheme.typography.headlineSmall
+                style = androidx.compose.material3.MaterialTheme.typography.titleMedium
             )
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(

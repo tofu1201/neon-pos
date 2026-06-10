@@ -311,7 +311,7 @@ private fun ExpandedLayout(
             categories = state.categories,
             selectedCategory = state.selectedCategory,
             onCategorySelected = { onEvent(PosEvent.SelectCategory(it)) },
-            modifier = Modifier.width(100.dp).fillMaxHeight()
+            modifier = Modifier.width(80.dp).fillMaxHeight()
         )
 
         Column(
@@ -329,7 +329,7 @@ private fun ExpandedLayout(
                 }
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 220.dp),
+                    columns = GridCells.Adaptive(minSize = 150.dp),
                     contentPadding = PaddingValues(bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -378,7 +378,7 @@ private fun CompactLayout(
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 160.dp),
+                columns = GridCells.Adaptive(minSize = 120.dp),
                 contentPadding = PaddingValues(bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

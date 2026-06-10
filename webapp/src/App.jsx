@@ -640,8 +640,6 @@ function SettingsManager() {
   )
 }
 
-export default App
-
 function EmployeeManager() {
   const [employees, setEmployees] = useState([])
   const [form, setForm] = useState({ name: '', pin: '', role: 'CASHIER' })
@@ -741,3 +739,5 @@ function EmployeeManager() {
     </div>
   )
 }
+
+export default App
