@@ -3,7 +3,7 @@ import axios from 'axios'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import './index.css'
 
-const API_BASE = window.location.port === '5173' ? 'http://127.0.0.1:8080/api' : '/api'
+const API_BASE = window.location.port === '5173' ? `http://${window.location.hostname}:8080/api` : '/api'
 
 function App() {
   const [activeTab, setActiveTab] = useState('kds')

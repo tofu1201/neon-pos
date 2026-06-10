@@ -31,6 +31,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.routing
+import io.ktor.server.http.content.staticResources
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -97,6 +98,11 @@ class PosWebServer(
                                 finish()
                             }
                         }
+                    }
+
+                    // Serve Web App Dashboard
+                    staticResources("/", "webapp") {
+                        default("index.html")
                     }
 
                     // API endpoints
