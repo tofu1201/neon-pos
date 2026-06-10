@@ -17,3 +17,6 @@
 
 # Ktor
 -keep class io.ktor.** { *; }
+-dontwarn java.lang.management.**
+-dontwarn org.slf4j.impl.**
+-dontwarn io.ktor.util.debug.**
