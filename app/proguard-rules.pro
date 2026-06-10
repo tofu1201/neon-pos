@@ -20,3 +20,7 @@
 -dontwarn java.lang.management.**
 -dontwarn org.slf4j.impl.**
 -dontwarn io.ktor.util.debug.**
+
+# Fix for Missing class javax.lang.model.element.Modifier
+-dontwarn javax.lang.model.**
+-dontwarn com.google.errorprone.annotations.**

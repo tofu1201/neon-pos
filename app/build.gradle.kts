@@ -26,6 +26,8 @@ android {
         versionCode = 1
         versionName = "1.0"
         resourceConfigurations += listOf("zh-rTW", "en")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testProguardFiles("proguard-rules.pro")
     }
 
     buildFeatures {

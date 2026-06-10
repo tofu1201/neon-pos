@@ -422,9 +422,26 @@ function KDS() {
                   </div>
                 ))}
               </div>
-              <button className="btn btn-primary" onClick={() => markCompleted(order)}>
-                標記為完成 (COMPLETED)
-              </button>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => markCompleted(order)}>
+                  ✅ 標記為完成 (COMPLETED)
+                </button>
+                <button 
+                  className="btn" 
+                  style={{ background: 'transparent', border: '1px solid var(--accent-pink)', color: 'var(--accent-pink)', padding: '0 16px' }}
+                  onClick={async () => {
+                    if (!window.confirm("確定要在廚房端取消這筆訂單嗎？")) return;
+                    try {
+                      await axios.post(`${API_BASE}/orders/${order.id}/cancel`);
+                      fetchOrders();
+                    } catch(e) {
+                      alert("取消失敗：" + e.message);
+                    }
+                  }}
+                >
+                  ❌ 取消訂單
+                </button>
+              </div>
             </div>
           ))
         )}
